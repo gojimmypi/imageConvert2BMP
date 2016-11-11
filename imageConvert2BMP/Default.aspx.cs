@@ -205,7 +205,8 @@ namespace imageConvert2BMP
         {
             String appDirectory = Path.GetDirectoryName(HttpContext.Current.Request.PhysicalPath);
             String targetImageName = HttpContext.Current.Request.QueryString["targetImageName"];
-            
+            String isExperiment = HttpContext.Current.Request.QueryString["experiment"];
+
             if (targetImageName != null && targetImageName != String.Empty)
             {
                 targetImageName = targetImageName.ToString();
@@ -268,9 +269,18 @@ namespace imageConvert2BMP
                     // Response.AddHeader("Content-Type", "image/bmp");
                     Response.ContentType =  "image/bmp";
 
+                    if (isExperiment != null && isExperiment != String.Empty && ("1" == isExperiment))
+                    {
+                        // we skip the Accept-Ranges: bytes header only in experiment mode!
+                    }
+                    else
+                    {
+                        Response.AddHeader("Accept-Ranges", "bytes"); // the miscellaneous header "Accept-Ranges: bytes" is *critical* to ESP8266!
+                    }
+
                     // this code I would have expected to work, but seems to abort before sending all data:
                     // thisImage.Save(HttpContext.Current.Response.OutputStream, System.Drawing.Imaging.ImageFormat.Bmp);
-
+                    // 
                     // see http://stackoverflow.com/questions/5629251/c-sharp-outputting-image-to-response-output-stream-giving-gdi-error
                     // PNGs (and other formats) need to be saved to a seekable stream. Using an intermediate MemoryStream will do the trick:
                     using (MemoryStream ms = new MemoryStream())
