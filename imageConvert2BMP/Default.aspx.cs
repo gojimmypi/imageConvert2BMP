@@ -204,10 +204,11 @@ namespace imageConvert2BMP
         protected void Page_Load(object sender, EventArgs e)
         {
             String appDirectory = Path.GetDirectoryName(HttpContext.Current.Request.PhysicalPath);
-            String targetImageName = HttpContext.Current.Request.QueryString["targetImageName"].ToString();
+            String targetImageName = HttpContext.Current.Request.QueryString["targetImageName"];
             
             if (targetImageName != null && targetImageName != String.Empty)
             {
+                targetImageName = targetImageName.ToString();
                 // clean up the name for web security / display
                 targetImageName = Server.UrlDecode(targetImageName);
                 targetImageName = Server.HtmlDecode(targetImageName);
