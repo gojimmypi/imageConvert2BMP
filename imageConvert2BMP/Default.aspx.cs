@@ -144,7 +144,7 @@ namespace imageConvert2BMP
         #endregion
 
 
-
+        const int MAX_PIXEL_SIZE = 2000;
 
         private static ImageCodecInfo GetEncoderInfo(String mimeType)
         {
@@ -180,7 +180,8 @@ namespace imageConvert2BMP
             String param = HttpContext.Current.Request.QueryString["newImageSizeX"];
             if (IsNumber(param))
             {
-                return Convert.ToInt16(param);
+                int res = Convert.ToInt16(param);
+                return ( (res < MAX_PIXEL_SIZE) ? res : MAX_PIXEL_SIZE); 
             }
             else
             {
@@ -193,7 +194,8 @@ namespace imageConvert2BMP
             String param = HttpContext.Current.Request.QueryString["newImageSizeY"];
             if (IsNumber(param))
             {
-                return Convert.ToInt16(param);
+                int res = Convert.ToInt16(param);
+                return ((res < MAX_PIXEL_SIZE) ? res : MAX_PIXEL_SIZE);
             }
             else
             {
@@ -260,7 +262,7 @@ namespace imageConvert2BMP
 
                     // save an example file to local directory
                     // thisImage.Save(imageLocalFullPath + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp); // this will save as 32 bit
-                    // thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters);
+                    // thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters); // save with selected params (24 bit)
 
                     
                     // see https://www.iana.org/assignments/media-types/image/bmp
@@ -275,6 +277,7 @@ namespace imageConvert2BMP
                     }
                     else
                     {
+                        Response.Headers.Remove("Cache-Control");
                         Response.AddHeader("Accept-Ranges", "bytes"); // the miscellaneous header "Accept-Ranges: bytes" is *critical* to ESP8266!
                     }
 
@@ -299,8 +302,9 @@ namespace imageConvert2BMP
                 }
             }
             else {
+                HttpContext.Current.Response.Write("<html><body>");
                 HttpContext.Current.Response.Write("File not specified; add QueryString parameters:<br />");
-                HttpContext.Current.Response.Write("");
+                HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("targetImageName=[file name in server ./images/ directory].<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("scaleX=[new X-dimension scale]<br />");
@@ -308,6 +312,12 @@ namespace imageConvert2BMP
                 HttpContext.Current.Response.Write("scaleY=[new Y-dimension scale]<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("See examples <a href='SampleConversions.html'>here</a>.<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("Source code: <a href='https://github.com/gojimmypi/imageConvert2BMP'>https://github.com/gojimmypi/imageConvert2BMP</a><br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("</body></html>");
             }
         }
     }
