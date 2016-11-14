@@ -56,9 +56,14 @@
     <Content Include="images\16color.bmp" />
     <Content Include="images\24bit.bmp" />
     <Content Include="images\256color.bmp" />
+    <Content Include="images\buspirate.png" />
     <Content Include="images\image32.png" />
     <Content Include="images\IMG_20161109_133054198.jpg" />
+    <Content Include="images\maxresdefault.jpg" />
     <Content Include="images\mono.bmp" />
+    <Content Include="images\nasa1.jpg" />
+    <Content Include="images\nasa2.jpg" />
+    <Content Include="images\nasa3.png" />
     <Content Include="SampleConversions.html" />
     <Content Include="images\image.png" />
     <Content Include="Web.config" />
