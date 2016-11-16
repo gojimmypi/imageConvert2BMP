@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net; // WebClient is here
 
 namespace imageConvert2BMP
 {
@@ -203,23 +204,37 @@ namespace imageConvert2BMP
             }
         }
 
+        Stream imageFromHTTP()
+        {
+            WebClient webClient = new WebClient();
+            Image img = Image.FromStream(webClient.OpenRead(path));
+            webClient.Dispose();
+        }
+
+       string safeString(string s) 
+        {
+            String res = s;
+            // clean up the name for web security / display
+            res = Server.UrlDecode(res);
+            res = Server.HtmlDecode(res);
+            res.Replace(">", "_");
+            res.Replace("<", "_");
+            res.Replace(";", "_");
+            res.Replace(":", "_");
+            res.Replace("&", "_");
+            return res;
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             String appDirectory = Path.GetDirectoryName(HttpContext.Current.Request.PhysicalPath);
             String targetImageName = HttpContext.Current.Request.QueryString["targetImageName"];
+            String targetHttpImage = HttpContext.Current.Request.QueryString["targetHttpImage"];
             String isExperiment = HttpContext.Current.Request.QueryString["experiment"];
 
             if (targetImageName != null && targetImageName != String.Empty)
             {
-                targetImageName = targetImageName.ToString();
-                // clean up the name for web security / display
-                targetImageName = Server.UrlDecode(targetImageName);
-                targetImageName = Server.HtmlDecode(targetImageName);
-                targetImageName.Replace(">", "_");
-                targetImageName.Replace("<", "_");
-                targetImageName.Replace(";", "_");
-                targetImageName.Replace(":", "_");
-                targetImageName.Replace("&", "_");
+                targetImageName = safeString(targetImageName.ToString());
 
                 String imageLocalFullPath = appDirectory + "\\images\\" + targetImageName;
                 if (File.Exists(imageLocalFullPath))
