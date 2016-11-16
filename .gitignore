@@ -241,3 +241,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /imageConvert2BMP/Properties/PublishProfiles/gojimmypi-dev-imageConvert2BMP.pubxml
+/imageConvert2BMP/Properties/PublishProfiles/gojimmypi-imageConvert2BMP.pubxml
+/imageConvert2BMP/Properties/PublishProfiles/gojimmypi-test-imageConvert2BMP.pubxml
