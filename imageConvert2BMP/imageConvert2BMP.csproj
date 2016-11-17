@@ -53,18 +53,30 @@
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="images\16color.bmp" />
+    <Content Include="images\24bit.bmp" />
+    <Content Include="images\256color.bmp" />
+    <Content Include="images\buspirate.png" />
+    <Content Include="images\image32.png" />
+    <Content Include="images\IMG_20161109_133054198.jpg" />
+    <Content Include="images\maxresdefault.jpg" />
+    <Content Include="images\mono.bmp" />
+    <Content Include="images\nasa1.jpg" />
+    <Content Include="images\nasa2.jpg" />
+    <Content Include="images\nasa3.png" />
     <Content Include="SampleConversions.html" />
     <Content Include="images\image.png" />
     <Content Include="Web.config" />
     <None Include="Properties\PublishProfiles\DEV-12.pubxml" />
+    <None Include="Properties\PublishProfiles\gojimmypi-dev-imageConvert2BMP.pubxml" />
     <None Include="Properties\PublishProfiles\gojimmypi-imageConvert2BMP.pubxml" />
+    <None Include="Properties\PublishProfiles\gojimmypi-test-imageConvert2BMP.pubxml" />
     <None Include="Properties\PublishProfiles\Public DMZ.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
-      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -5,11 +5,13 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net; // WebClient is here
 
 namespace imageConvert2BMP
 {
     public partial class _Default : Page
     {
+        WebClient webClient;
 
         #region "Image Processing"
         void CropImage(Stream myStream,  float HorizontalOffsetPercent = 0, float VerticalOffsetPercent   = 0)
@@ -144,7 +146,7 @@ namespace imageConvert2BMP
         #endregion
 
 
-
+        const int MAX_PIXEL_SIZE = 2000;
 
         private static ImageCodecInfo GetEncoderInfo(String mimeType)
         {
@@ -180,7 +182,8 @@ namespace imageConvert2BMP
             String param = HttpContext.Current.Request.QueryString["newImageSizeX"];
             if (IsNumber(param))
             {
-                return Convert.ToInt16(param);
+                int res = Convert.ToInt16(param);
+                return ( (res < MAX_PIXEL_SIZE) ? res : MAX_PIXEL_SIZE); 
             }
             else
             {
@@ -193,7 +196,8 @@ namespace imageConvert2BMP
             String param = HttpContext.Current.Request.QueryString["newImageSizeY"];
             if (IsNumber(param))
             {
-                return Convert.ToInt16(param);
+                int res = Convert.ToInt16(param);
+                return ((res < MAX_PIXEL_SIZE) ? res : MAX_PIXEL_SIZE);
             }
             else
             {
@@ -201,103 +205,171 @@ namespace imageConvert2BMP
             }
         }
 
+        Image imageFromHTTP(string uriAddress)
+        {
+            Image img = Image.FromStream(webClient.OpenRead(uriAddress));
+            webClient.Dispose();
+            return img; 
+        }
+
+       string safeString(string s) 
+        {
+            String res = s;
+            // clean up the name for web security / display
+            res = Server.UrlDecode(res);
+            res = Server.HtmlDecode(res);
+            res.Replace(">", "_");
+            res.Replace("<", "_");
+            res.Replace(";", "_");
+            res.Replace(":", "_");
+            res.Replace("&", "_");
+            return res;
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             String appDirectory = Path.GetDirectoryName(HttpContext.Current.Request.PhysicalPath);
             String targetImageName = HttpContext.Current.Request.QueryString["targetImageName"];
-            
-            if (targetImageName != null && targetImageName != String.Empty)
+            String targetHttpImage = HttpContext.Current.Request.QueryString["targetHttpImage"];
+            String isExperiment = HttpContext.Current.Request.QueryString["experiment"];
+
+            Image thisImage = null;
+            if (targetHttpImage != null && targetHttpImage != String.Empty)
             {
-                targetImageName = targetImageName.ToString();
-                // clean up the name for web security / display
-                targetImageName = Server.UrlDecode(targetImageName);
-                targetImageName = Server.HtmlDecode(targetImageName);
-                targetImageName.Replace(">", "_");
-                targetImageName.Replace("<", "_");
-                targetImageName.Replace(";", "_");
-                targetImageName.Replace(":", "_");
-                targetImageName.Replace("&", "_");
+                webClient = new WebClient();
+                try
+                {
+                    thisImage = Image.FromStream(webClient.OpenRead(targetHttpImage));
+                }
+                catch 
+                {
+                    HttpContext.Current.Response.Write("Error when reading Uri: " + targetHttpImage);
+                }
+            }
+            else if (targetImageName != null && targetImageName != String.Empty)
+            {
+                targetImageName = safeString(targetImageName.ToString());
 
                 String imageLocalFullPath = appDirectory + "\\images\\" + targetImageName;
                 if (File.Exists(imageLocalFullPath))
                 {
-                    Image thisImage = Image.FromFile(imageLocalFullPath);
-
-                    //  first thing: decide if the source needs t0 be resized:
-                    if  (this.newImageSizeX() > 0 || this.newImageSizeY() > 0)
-                    {
-                        thisImage = ResizeImage(thisImage, this.newImageSizeX(), this.newImageSizeY());
-                    }
-                    else { // don't even touch the image if it does not need to be resized!
-                    } 
-
-
-                    ImageCodecInfo myImageCodecInfo;
-                    // Get an ImageCodecInfo object that represents the TIFF codec.
-                    myImageCodecInfo = GetEncoderInfo("image/bmp");
-
-                    Encoder myEncoder;
-                    // Create an Encoder object based on the GUID
-                    // for the ColorDepth parameter category.
-                    myEncoder = Encoder.ColorDepth;
-
-                    // Create an EncoderParameters object.
-                    // An EncoderParameters object has an array of EncoderParameter
-                    // objects. In this case, there is only one
-                    // EncoderParameter object in the array.
-                    // see https://msdn.microsoft.com/en-us/library/system.drawing.imaging.encoderparameter(v=vs.110).aspx
-                    EncoderParameter myEncoderParameter;
-                    EncoderParameters myEncoderParameters;
-
-                    // Save the image with a color depth of 24 bits per pixel.
-                    // see https://msdn.microsoft.com/en-us/library/system.drawing.imaging.encoder.colordepth(v=vs.110).aspx
-                    myEncoderParameter =  new EncoderParameter(myEncoder, 24L); // the ILI4321 library only currently works with 24 bit color depth
-
-                    myEncoderParameters = new EncoderParameters(1);
-                    myEncoderParameters.Param[0] = myEncoderParameter;
-
-
-                    // save an example file to local directory
-                    // thisImage.Save(imageLocalFullPath + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp); // this will save as 32 bit
-                    thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters);
-
-                    
-                    // see https://www.iana.org/assignments/media-types/image/bmp
-                    // Response.ClearHeaders();
-                    // Response.AddHeader("content-transfer-encoding", "image/bmp");
-                    // Response.AddHeader("Content-Type", "image/bmp");
-                    Response.ContentType =  "image/bmp";
-
-                    // this code I would have expected to work, but seems to abort before sending all data:
-                    // thisImage.Save(HttpContext.Current.Response.OutputStream, System.Drawing.Imaging.ImageFormat.Bmp);
-
-                    // see http://stackoverflow.com/questions/5629251/c-sharp-outputting-image-to-response-output-stream-giving-gdi-error
-                    // PNGs (and other formats) need to be saved to a seekable stream. Using an intermediate MemoryStream will do the trick:
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        thisImage.Save(ms, myImageCodecInfo, myEncoderParameters);
-
-                        // send to web client
-                        ms.WriteTo(HttpContext.Current.Response.OutputStream);
-                        Response.End();
-                    }
-
+                    thisImage = Image.FromFile(imageLocalFullPath);
                 }
                 else
                 {
                     HttpContext.Current.Response.Write("File not found: images\\" + targetImageName);
+                    return;
                 }
+
+            }
+
+            if (thisImage != null)
+            {
+
+                //  first thing: decide if the source needs t0 be resized:
+                if (this.newImageSizeX() > 0 || this.newImageSizeY() > 0)
+                {
+                    thisImage = ResizeImage(thisImage, this.newImageSizeX(), this.newImageSizeY());
+                }
+                else
+                { // don't even touch the image if it does not need to be resized!
+                }
+
+
+                ImageCodecInfo myImageCodecInfo;
+                // Get an ImageCodecInfo object that represents the TIFF codec.
+                myImageCodecInfo = GetEncoderInfo("image/bmp");
+
+                Encoder myEncoder;
+                // Create an Encoder object based on the GUID
+                // for the ColorDepth parameter category.
+                myEncoder = Encoder.ColorDepth;
+
+                // Create an EncoderParameters object.
+                // An EncoderParameters object has an array of EncoderParameter
+                // objects. In this case, there is only one
+                // EncoderParameter object in the array.
+                // see https://msdn.microsoft.com/en-us/library/system.drawing.imaging.encoderparameter(v=vs.110).aspx
+                EncoderParameter myEncoderParameter;
+                EncoderParameters myEncoderParameters;
+
+                // Save the image with a color depth of 24 bits per pixel.
+                // see https://msdn.microsoft.com/en-us/library/system.drawing.imaging.encoder.colordepth(v=vs.110).aspx
+                myEncoderParameter = new EncoderParameter(myEncoder, 24L); // the ILI4321 library only currently works with 24 bit color depth
+
+                myEncoderParameters = new EncoderParameters(1);
+                myEncoderParameters.Param[0] = myEncoderParameter;
+
+
+                // save an example file to local directory
+                // thisImage.Save(imageLocalFullPath + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp); // this will save as 32 bit
+                // thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters); // save with selected params (24 bit)
+
+
+                // see https://www.iana.org/assignments/media-types/image/bmp
+                // Response.ClearHeaders();
+                // Response.AddHeader("content-transfer-encoding", "image/bmp");
+                // Response.AddHeader("Content-Type", "image/bmp");
+                Response.ContentType = "image/bmp";
+
+                if (isExperiment != null && isExperiment != String.Empty && ("1" == isExperiment))
+                {
+                    // we skip the Accept-Ranges: bytes header only in experiment mode!
+                }
+                else
+                {
+                    Response.Headers.Remove("Cache-Control");
+                    Response.AddHeader("Accept-Ranges", "bytes"); // the miscellaneous header "Accept-Ranges: bytes" is *critical* to ESP8266!
+                }
+
+                // this code I would have expected to work, but seems to abort before sending all data:
+                // thisImage.Save(HttpContext.Current.Response.OutputStream, System.Drawing.Imaging.ImageFormat.Bmp);
+                // 
+                // see http://stackoverflow.com/questions/5629251/c-sharp-outputting-image-to-response-output-stream-giving-gdi-error
+                // PNGs (and other formats) need to be saved to a seekable stream. Using an intermediate MemoryStream will do the trick:
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    thisImage.Save(ms, myImageCodecInfo, myEncoderParameters);
+
+                    // send to web client
+                    ms.WriteTo(HttpContext.Current.Response.OutputStream);
+                    Response.End();
+                }
+
             }
             else {
-                HttpContext.Current.Response.Write("File not specified; add QueryString parameters:<br />");
-                HttpContext.Current.Response.Write("");
+                HttpContext.Current.Response.Write("<html><body>");
+                HttpContext.Current.Response.Write("imageConvert2BMP Version 0.02<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("No image specified to show; File or URL not specified; add QueryString parameters:<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("targetHttpImage=[http link to image]<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("<b>OR</b><br />");
+                HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("targetImageName=[file name in server ./images/ directory].<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("Optional resizing (specify only 1 to maintain aspect ratio, )<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("scaleX=[new X-dimension scale]<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("scaleY=[new Y-dimension scale]<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("See examples <a href='SampleConversions.html'>here</a>.<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("Source code: <a href='https://github.com/gojimmypi/imageConvert2BMP'>https://github.com/gojimmypi/imageConvert2BMP</a><br />");
+                HttpContext.Current.Response.Write("<br />");
+                HttpContext.Current.Response.Write("</body></html>");
+            }
+
+            // cleanup and exit
+            if (webClient != null)
+            {
+                webClient.Dispose();
             }
         }
     }
