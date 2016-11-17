@@ -57,12 +57,14 @@
     <Content Include="images\image.png" />
     <Content Include="Web.config" />
     <None Include="Properties\PublishProfiles\DEV-12.pubxml" />
+    <None Include="Properties\PublishProfiles\gojimmypi-imageConvert2BMP.pubxml" />
     <None Include="Properties\PublishProfiles\Public DMZ.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

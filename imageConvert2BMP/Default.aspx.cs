@@ -259,7 +259,7 @@ namespace imageConvert2BMP
 
                     // save an example file to local directory
                     // thisImage.Save(imageLocalFullPath + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp); // this will save as 32 bit
-                    // thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters);
+                    thisImage.Save(imageLocalFullPath + ".bmp", myImageCodecInfo, myEncoderParameters);
 
                     
                     // see https://www.iana.org/assignments/media-types/image/bmp
