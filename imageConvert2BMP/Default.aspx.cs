@@ -353,9 +353,9 @@ namespace imageConvert2BMP
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("Optional resizing (specify only 1 to maintain aspect ratio, )<br />");
                 HttpContext.Current.Response.Write("<br />");
-                HttpContext.Current.Response.Write("scaleX=[new X-dimension scale]<br />");
+                HttpContext.Current.Response.Write("newImageSizeX=[new X-dimension scale]<br />");
                 HttpContext.Current.Response.Write("<br />");
-                HttpContext.Current.Response.Write("scaleY=[new Y-dimension scale]<br />");
+                HttpContext.Current.Response.Write("newImageSizeY=[new Y-dimension scale]<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("<br />");
                 HttpContext.Current.Response.Write("See examples <a href='SampleConversions.html'>here</a>.<br />");
